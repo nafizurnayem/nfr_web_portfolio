@@ -68,6 +68,12 @@ class Settings(BaseSettings):
     smtp_password: str = Field(default="")
     contact_receiver_email: str = Field(default="admin@example.com")
 
+    # Startup behaviour
+    # On a serverless host the lifespan hook runs on every cold start, so
+    # creating tables and re-running the seed each time is pure latency once the
+    # database is populated. Set to false in production after the first deploy.
+    run_startup_migrations: bool = Field(default=True)
+
     # Upload limits (shared by the demo endpoints)
     max_upload_bytes: int = Field(default=4 * 1024 * 1024, ge=1024)
 

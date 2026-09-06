@@ -21,6 +21,7 @@ venv/
 # Node / Next
 node_modules/
 .next/
+*.tsbuildinfo
 out/
 .turbo/
 .vercel/
@@ -43,3 +44,4 @@ blob-report/
 
 # Local agent tooling and skill data -- not part of the portfolio
 .claude/
+.neon

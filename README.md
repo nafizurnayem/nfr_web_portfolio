@@ -170,70 +170,84 @@ cd backend
 It exits non-zero if anything is broken, so it works as a deploy gate. Sites that
 block bots (LinkedIn, ResearchGate) are reported as `blocked`, not failures.
 
-## Deploying
+## Deploying (free tier)
 
-The frontend and backend deploy independently.
+Both halves ship as one Vercel project: the Next.js app plus the FastAPI
+backend as a Python serverless function. The database is Neon Postgres.
+Everything below fits in the free tiers.
 
-### Backend (FastAPI)
+### Layout
 
-Any host that runs a Python web service works — Railway, Render, Fly.io, or a VPS
-behind nginx. Required environment variables:
+```
+vercel.json          routes /api/* to the Python function, everything else to Next.js
+api/index.py         Vercel entry point -- re-exports the FastAPI app from backend/
+requirements.txt     -r backend/requirements.txt (one list, no drift)
+frontend/            Next.js app
+backend/             FastAPI source
+```
+
+`api/index.py` puts `backend/` on `sys.path` and re-exports `app`. The
+function receives `/api/projects` and FastAPI's own `api_prefix` is `/api`, so
+the paths line up — **do not strip the prefix** at either end.
+
+### 1. Database (Neon)
+
+Create a project at neon.tech and copy the **pooled** connection string. Then
+create the schema and seed it once, using the **direct/unpooled** URL (DDL is
+safer off the pooler):
+
+```powershell
+cd backend
+$env:DATABASE_URL="<DATABASE_URL_UNPOOLED>"
+.\.venv\Scripts\python.exe -c "from app.db.base import Base; from app.db.session import engine, SessionLocal; from app.db.seed import seed_all; Base.metadata.create_all(bind=engine); db=SessionLocal(); seed_all(db)"
+```
+
+### 2. Vercel
+
+Import the GitHub repo. Leave the root directory as the repository root —
+`vercel.json` handles the rest. Set these environment variables:
 
 ```env
 APP_ENV=production
-DATABASE_URL=postgresql+psycopg2://user:password@host:5432/dbname
+DATABASE_URL=<Neon pooled URL>
 JWT_SECRET_KEY=<64+ random chars>
 ADMIN_EMAIL=you@your-domain.com
 ADMIN_INITIAL_PASSWORD=<12+ chars>
-CORS_ORIGINS=https://your-domain.com
+CORS_ORIGINS=https://<your-app>.vercel.app
+RUN_STARTUP_MIGRATIONS=false
+NEXT_PUBLIC_API_BASE_URL=https://<your-app>.vercel.app/api
+NEXT_PUBLIC_SITE_URL=https://<your-app>.vercel.app
 ```
 
-Generate a secret with:
+Generate the secret with:
 
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-**The app refuses to start in production** if `JWT_SECRET_KEY` or
-`ADMIN_INITIAL_PASSWORD` is still a placeholder, if the JWT key is under 32
-characters, if `ADMIN_EMAIL` is still an `@example.com` address, or if
-`CORS_ORIGINS` contains `*` or a non-HTTPS origin. That is deliberate: a
-misconfigured deploy fails loudly instead of running insecurely.
+`RUN_STARTUP_MIGRATIONS=false` matters on serverless: the lifespan hook runs on
+every cold start, and re-running `create_all` + the seed each time is pure
+latency once the database is populated. Set it to `true` for one deploy if you
+ever need the schema rebuilt.
 
-Serve it with a process manager, e.g.:
+**The app refuses to start in production** with a placeholder secret, a JWT key
+under 32 characters, an `@example.com` admin address, or a `*`/non-HTTPS CORS
+origin. A misconfigured deploy fails loudly rather than running insecurely.
 
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
-```
+### Known limitation on serverless
 
-### Frontend (Next.js)
-
-Vercel is the path of least resistance; anything that runs `next build` works.
-Set both variables in the host's dashboard:
-
-```env
-NEXT_PUBLIC_API_BASE_URL=https://api.your-domain.com/api
-NEXT_PUBLIC_SITE_URL=https://your-domain.com
-```
-
-`NEXT_PUBLIC_API_BASE_URL` also feeds the Content-Security-Policy `connect-src`
-directive, so the browser is allowed to reach exactly that origin and no other.
-`NEXT_PUBLIC_SITE_URL` drives canonical URLs, Open Graph tags, `robots.txt`, and
-`sitemap.xml` — set it before the first crawl or those will all point at localhost.
-
-Then:
-
-```bash
-npm run build
-npm run start
-```
+Rate limiting (`slowapi`) keeps its counters **in memory**. Each serverless
+invocation may land on a fresh instance, so the 5/minute contact limit is not
+meaningfully enforced in production. Validation and the honeypot still work.
+Fixing it properly needs shared storage — Upstash Redis has a free tier.
 
 ### Post-deploy checks
 
 ```bash
-curl -s https://api.your-domain.com/api/health/ready     # {"status":"ok","database":"up"}
-curl -o /dev/null -w "%{http_code}" https://your-domain.com/projects/does-not-exist   # must be 404
-curl -s https://your-domain.com/robots.txt
+curl -s https://<your-app>.vercel.app/api/health/ready   # {"status":"ok","database":"up"}
+curl -s https://<your-app>.vercel.app/api/projects | head -c 200
+curl -o /dev/null -w "%{http_code}" https://<your-app>.vercel.app/projects/does-not-exist   # must be 404
+curl -s https://<your-app>.vercel.app/robots.txt
 ```
 
 A 200 on that middle command means a `loading.tsx` has been added above a route
@@ -247,6 +261,7 @@ that calls `notFound()`, which turns real 404s into soft 404s. See the note in
 - [ ] `CORS_ORIGINS` limited to the real HTTPS domain.
 - [ ] `DATABASE_URL` pointed at PostgreSQL, not SQLite.
 - [ ] `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_BASE_URL` set on the frontend host.
+- [ ] `RUN_STARTUP_MIGRATIONS=false` once the database is seeded.
 - [ ] `python scripts/check_links.py` passes.
 - [ ] `/projects/does-not-exist` returns 404, not 200.
 - [ ] Real résumé PDF present at `frontend/public/resume.pdf`.

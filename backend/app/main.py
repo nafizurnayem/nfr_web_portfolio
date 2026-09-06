@@ -91,9 +91,12 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
 async def lifespan(app: FastAPI):
     """Create tables and seed reference data before the app serves traffic."""
     settings = get_settings()
-    Base.metadata.create_all(bind=engine)
-    with SessionLocal() as db:
-        seed_all(db)
+    if settings.run_startup_migrations:
+        Base.metadata.create_all(bind=engine)
+        with SessionLocal() as db:
+            seed_all(db)
+    else:
+        logger.info("Startup migrations skipped (RUN_STARTUP_MIGRATIONS=false).")
     logger.info(
         "Backend ready [env=%s]. CORS origins: %s",
         settings.app_env,

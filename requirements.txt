@@ -1,0 +1,6 @@
+# Dependencies for the Vercel Python function in `api/`.
+#
+# Deliberately an include rather than a copy: two hand-maintained lists drift,
+# and a version skew between local development and the deployed function is the
+# kind of bug that only shows up in production.
+-r backend/requirements.txt

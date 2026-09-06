@@ -1,15 +1,7 @@
-fastapi==0.115.5
-uvicorn[standard]==0.32.1
-SQLAlchemy==2.0.36
-alembic==1.14.0
-pydantic==2.10.3
-pydantic-settings==2.6.1
-python-dotenv==1.0.1
-passlib[argon2]==1.7.4
-argon2-cffi==23.1.0
-python-jose[cryptography]==3.3.0
-python-multipart==0.0.20
-slowapi==0.1.9
-bleach==6.2.0
-email-validator==2.2.0
-psycopg2-binary==2.9.10
+# The dependency list lives at the repository root, because Vercel's Python
+# builder reads that file and cannot follow pip includes. This file points at
+# it so there is only ever one list to keep pinned.
+#
+# The path is resolved relative to this file, so `pip install -r
+# backend/requirements.txt` works from any directory.
+-r ../requirements.txt

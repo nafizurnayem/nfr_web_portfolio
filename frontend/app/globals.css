@@ -1,0 +1,668 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular,
+    Menlo, Consolas, monospace;
+
+  /* z-index scale -- keep every layer registered here so stacking stays sane. */
+  --z-backdrop: -20;
+  --z-ambient: -10;
+  --z-content: 1;
+  --z-sticky: 30;
+  --z-header: 40;
+  --z-overlay: 50;
+  --z-cursor: 70;
+}
+
+/* ── Dark theme (default) ──────────────────────────────────────────────────
+   The `ink` scale is semantic: 950 is always the page ground, 50 is always the
+   strongest text. Both themes keep that meaning and swap the literal values, so
+   every existing `ink-*` utility inverts for free.
+
+   Values are space-separated RGB triplets so Tailwind opacity modifiers work. */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ink-950: 4 6 10;
+  --ink-900: 10 13 20;
+  --ink-800: 16 20 30;
+  --ink-700: 23 28 40;
+  --ink-600: 32 39 54;
+  --ink-500: 45 53 71;
+  --ink-400: 90 97 120;
+  --ink-300: 120 127 149;
+  --ink-200: 152 161 180;
+  --ink-100: 200 205 217;
+  --ink-50: 238 241 246;
+
+  --accent: 34 211 238;
+  --accent-soft: 125 211 252;
+  --accent-glow: 8 145 178;
+  --accent-green: 74 222 128;
+  --accent-violet: 167 139 250;
+  --accent-magenta: 232 121 249;
+  --accent-amber: 251 191 36;
+
+  /* Hairlines and glass fills. */
+  --line: 255 255 255;
+  --line-strong: 255 255 255;
+  --line-alpha: 0.09;
+  --line-strong-alpha: 0.16;
+  --surface: 255 255 255;
+  --surface-strong: 255 255 255;
+  --surface-alpha: 0.045;
+  --surface-strong-alpha: 0.08;
+
+  --glass-bg: rgba(255, 255, 255, 0.045);
+  --glass-bg-strong: rgba(255, 255, 255, 0.075);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-highlight: rgba(255, 255, 255, 0.14);
+  --glass-blur: 22px;
+  --glass-saturate: 165%;
+
+  --shadow-glass: 0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+    0 10px 30px -12px rgba(0, 0, 0, 0.7);
+  --shadow-glass-lg: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 24px 60px -20px rgba(0, 0, 0, 0.8);
+  --shadow-glow-cyan: 0 0 20px rgba(34, 211, 238, 0.32), 0 0 60px rgba(34, 211, 238, 0.10);
+  --shadow-glow-violet: 0 0 20px rgba(167, 139, 250, 0.32);
+  --shadow-glow-green: 0 0 18px rgba(74, 222, 128, 0.32);
+  --glow-green: rgba(74, 222, 128, 0.9);
+
+  --grid-faint: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  --radial-fade: radial-gradient(ellipse at top, rgba(34, 211, 238, 0.10), transparent 60%);
+  --dot-grid-colour: rgba(255, 255, 255, 0.09);
+  --grain-opacity: 0.07;
+  --vignette-edge: rgba(0, 0, 0, 0.45);
+
+  --hero-mask: radial-gradient(
+    ellipse 60% 70% at 26% 45%,
+    rgba(4, 6, 10, 0.88),
+    rgba(4, 6, 10, 0.45) 62%,
+    rgba(4, 6, 10, 0) 100%
+  );
+  --sheen: linear-gradient(110deg, #22d3ee 0%, #7dd3fc 22%, #ffffff 38%, #a78bfa 58%, #e879f9 78%, #22d3ee 100%);
+
+  --portrait-glow: radial-gradient(
+    ellipse 60% 55% at 50% 45%,
+    rgba(34, 211, 238, 0.22),
+    rgba(167, 139, 250, 0.13) 55%,
+    transparent 75%
+  );
+  --portrait-fade: linear-gradient(
+    to top,
+    rgb(10 13 20) 8%,
+    rgba(10, 13, 20, 0.6) 45%,
+    transparent
+  );
+}
+
+/* ── Light theme ───────────────────────────────────────────────────────────
+   iOS-style: a soft off-white ground with white frosted panels. Accents are
+   darkened versions of the dark-theme hues, because the bright cyan that reads
+   well on near-black drops to ~1.9:1 on white. */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --ink-950: 242 242 247;
+  --ink-900: 255 255 255;
+  --ink-800: 248 248 251;
+  --ink-700: 236 236 241;
+  --ink-600: 226 226 233;
+  --ink-500: 199 199 208;
+  --ink-400: 122 122 138;
+  --ink-300: 104 104 122;
+  --ink-200: 79 79 95;
+  --ink-100: 46 46 58;
+  --ink-50: 11 11 15;
+
+  --accent: 3 105 129;
+  --accent-soft: 14 116 144;
+  --accent-glow: 8 145 178;
+  --accent-green: 4 122 87;
+  --accent-violet: 109 63 217;
+  --accent-magenta: 162 33 179;
+  --accent-amber: 154 84 6;
+
+  --line: 0 0 0;
+  --line-strong: 0 0 0;
+  --line-alpha: 0.09;
+  --line-strong-alpha: 0.16;
+  --surface: 255 255 255;
+  --surface-strong: 255 255 255;
+  --surface-alpha: 0.72;
+  --surface-strong-alpha: 0.86;
+
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+  --glass-blur: 22px;
+  --glass-saturate: 180%;
+
+  --shadow-glass: 0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
+    0 8px 24px -10px rgba(15, 23, 42, 0.18);
+  --shadow-glass-lg: 0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
+    0 24px 50px -18px rgba(15, 23, 42, 0.22);
+  --shadow-glow-cyan: 0 0 22px rgba(4, 132, 161, 0.16);
+  --shadow-glow-violet: 0 0 22px rgba(109, 63, 217, 0.16);
+  --shadow-glow-green: 0 0 18px rgba(4, 122, 87, 0.16);
+  --glow-green: rgba(4, 122, 87, 0.55);
+
+  --grid-faint: linear-gradient(to right, rgba(0, 0, 0, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.045) 1px, transparent 1px);
+  --radial-fade: radial-gradient(ellipse at top, rgba(4, 132, 161, 0.10), transparent 62%);
+  /* Grain and a heavy vignette read as grime on a light ground, so the
+     grain is dropped entirely and the vignette softened to a hint. */
+  --dot-grid-colour: rgba(0, 0, 0, 0.07);
+  --grain-opacity: 0;
+  --vignette-edge: rgba(15, 23, 42, 0.06);
+
+  --hero-mask: radial-gradient(
+    ellipse 60% 70% at 26% 45%,
+    rgba(242, 242, 247, 0.92),
+    rgba(242, 242, 247, 0.6) 62%,
+    rgba(242, 242, 247, 0) 100%
+  );
+  /* No white stop: on a light ground it would erase part of the word. */
+  --sheen: linear-gradient(110deg, #0e7490 0%, #0891b2 24%, #6d28d9 52%, #a21caf 76%, #0e7490 100%);
+
+  --portrait-glow: radial-gradient(
+    ellipse 60% 55% at 50% 45%,
+    rgba(4, 132, 161, 0.16),
+    rgba(109, 63, 217, 0.10) 55%,
+    transparent 75%
+  );
+  --portrait-fade: linear-gradient(
+    to top,
+    rgb(255 255 255) 8%,
+    rgba(255, 255, 255, 0.65) 45%,
+    transparent
+  );
+}
+
+html,
+body {
+  background: rgb(var(--ink-950));
+  color: rgb(var(--ink-50));
+  min-height: 100%;
+}
+
+/* The theme swap animates rather than snapping. Colour transitions are cheap
+   here because only a handful of properties are involved and the page is not
+   animating anything else at the time.
+
+   `.theme-switching` is applied to <html> for the duration of the toggle, so
+   the transition cost is paid only then -- not on every hover of every card. */
+/* ── Theme switch ──────────────────────────────────────────────────────────
+   Preferred path is the View Transitions API, driven from `theme-toggle.tsx`:
+   the browser snapshots the page and the new theme is revealed with a circular
+   wipe. Both snapshots must have their default cross-fade removed, or the
+   browser's fade fights the wipe and the result looks muddy. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* The outgoing snapshot sits underneath while the new one is clipped open on
+   top, so the incoming theme washes over the old rather than dissolving. */
+::view-transition-old(root) {
+  z-index: 0;
+}
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+/* Fallback for browsers without View Transitions (Firefox, older Safari).
+   Colours are transitioned on the elements themselves, which is measurably
+   heavier -- it touches ~1100 elements at once -- so it is enabled only for
+   the duration of the switch, and `box-shadow` is deliberately excluded: it
+   was the most expensive property to interpolate at that scale. */
+html.theme-switching,
+html.theme-switching body,
+html.theme-switching *:not(svg):not(path) {
+  transition: background-color 420ms ease, border-color 420ms ease,
+    color 420ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No wipe, no colour fade -- the theme simply applies. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+  html.theme-switching,
+  html.theme-switching body,
+  html.theme-switching *:not(svg):not(path) {
+    transition: none;
+  }
+}
+
+/* Anchor links must not land under the sticky header. */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.35);
+  color: #f1fbff;
+}
+
+/* Keyboard focus must always be visible, including on custom-cursor pages. */
+:focus-visible {
+  outline: 2px solid rgba(34, 211, 238, 0.85);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* When the custom magnetic cursor is active, hide the OS cursor on most surfaces.
+   We keep the I-beam on text inputs/textareas because users expect it there. */
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
+}
+html.custom-cursor input[type="text"],
+html.custom-cursor input[type="email"],
+html.custom-cursor input[type="search"],
+html.custom-cursor input[type="url"],
+html.custom-cursor input[type="password"],
+html.custom-cursor textarea {
+  cursor: text !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer components {
+  /**
+   * The glass surface, in the manner of iOS: a translucent fill, a blurred and
+   * saturated backdrop, a hairline border, and a bright inner top edge that
+   * reads as light catching the lip of the panel.
+   *
+   * `backdrop-filter` only produces the frosted look when there is something
+   * behind it, which is why the page keeps an ambient gradient and grid.
+   */
+  .glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-glass);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border-radius: 20px;
+    position: relative;
+    isolation: isolate;
+  }
+  /* The specular top edge. */
+  .glass-panel::before {
+    content: "";
+    position: absolute;
+    inset-inline: 12%;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glass-panel-strong {
+    background: var(--glass-bg-strong);
+    box-shadow: var(--shadow-glass-lg);
+  }
+
+  /* Hairline that follows the theme, for dividers inside glass. */
+  .glass-divider {
+    border-color: var(--glass-border);
+  }
+
+  /* Retained aliases so existing markup keeps working. */
+  .glass {
+    @apply glass-panel;
+  }
+  .glass-strong {
+    @apply glass-panel glass-panel-strong;
+  }
+
+  .terminal {
+    @apply glass-panel font-mono text-sm leading-relaxed text-ink-100;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[11px] text-ink-200 sm:text-xs;
+    border-color: var(--glass-border);
+    background: var(--glass-bg);
+  }
+  .pill-accent {
+    @apply inline-flex items-center gap-1 rounded-full border border-accent/40 bg-accent/[0.10] px-2.5 py-0.5 font-mono text-[11px] text-accent-soft sm:text-xs;
+  }
+
+  .btn {
+    @apply relative inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:translate-y-[1px];
+    transition-property: transform, background-color, border-color, color, box-shadow;
+  }
+  .btn-primary {
+    @apply btn text-ink-950;
+    background: rgb(var(--accent));
+    box-shadow: var(--shadow-glow-cyan);
+  }
+  .btn-primary:hover {
+    background: rgb(var(--accent-soft));
+  }
+  .btn-ghost {
+    @apply btn glass-panel rounded-full text-ink-100;
+  }
+  .btn-ghost:hover {
+    border-color: rgb(var(--accent) / 0.45);
+    color: rgb(var(--accent));
+  }
+
+  .link-underline {
+    position: relative;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-size: 0 1px;
+    background-position: 0 100%;
+    transition: background-size 0.35s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+
+  .input {
+    @apply w-full rounded-xl border px-3.5 py-2.5 text-base text-ink-50 placeholder:text-ink-300 focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/25 sm:py-2 sm:text-sm;
+    border-color: var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .label {
+    @apply mb-1.5 block font-mono text-xs uppercase tracking-wider text-ink-200;
+  }
+  .heading-mono {
+    @apply font-mono text-xs uppercase tracking-[0.2em] text-accent-soft;
+  }
+}
+
+@layer utilities {
+  .grid-overlay {
+    background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.04) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .radial-fade {
+    background: radial-gradient(
+      ellipse at top,
+      rgba(34, 211, 238, 0.12),
+      transparent 60%
+    );
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+  .scanlines {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.025) 0px,
+      rgba(255, 255, 255, 0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: overlay;
+    opacity: 0.35;
+  }
+  .film-grain {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+    background-size: 240px 240px;
+    mix-blend-mode: overlay;
+    opacity: var(--grain-opacity, 0.07);
+  }
+  .vignette {
+    background: radial-gradient(
+      ellipse at center,
+      transparent 35%,
+      var(--vignette-edge) 100%
+    );
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+}
+
+/* ── Neural Console additions ────────────────────────────────────────────
+   Component classes specific to the AI/ML visual language: model cards,
+   metric readouts, tensor-style chips, and the animated gradient headline. */
+@layer components {
+  /* Gradient headline used for the one "hero" phrase on a page. */
+  .text-neural {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--sheen);
+    background-size: 200% auto;
+  }
+  .text-neural-animated {
+    @apply text-neural animate-gradient-pan;
+  }
+
+  /* A model card: the framing device for every project surface. Mirrors the
+     layout conventions of a Hugging Face model card -- identity strip on top,
+     body, then a metrics/actions footer. */
+  /* The workhorse card. Same glass recipe as `.glass-panel`, plus the accent
+     hairline across the top that ties the cards together visually. */
+  .model-card {
+    @apply glass-panel relative overflow-hidden rounded-[22px] transition-colors duration-200;
+  }
+  .model-card:hover {
+    border-color: rgb(var(--accent) / 0.32);
+  }
+  .model-card::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--accent) / 0.5),
+      rgb(var(--accent-violet) / 0.5),
+      transparent
+    );
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .metric {
+    @apply glass-panel rounded-2xl px-3 py-2.5 transition-colors duration-200 sm:px-3.5 sm:py-3;
+  }
+  .metric:hover {
+    border-color: rgb(var(--accent) / 0.3);
+  }
+  .metric-label {
+    @apply font-mono text-[11px] uppercase tracking-[0.14em] text-ink-300;
+  }
+  .metric-value {
+    @apply mt-1 font-mono text-lg tabular-nums text-ink-50 sm:text-xl;
+  }
+
+  /* Tensor chip: shows a shape or dtype, e.g. [1, 3, 224, 224] or float32. */
+  .tensor-chip {
+    @apply inline-flex items-center gap-1.5 rounded-lg border border-accent-violet/30 bg-accent-violet/[0.10] px-2 py-0.5 font-mono text-[11px] text-accent-violet;
+  }
+
+  /* Status dot with a soft halo. Colour is set by the caller. */
+  .status-dot {
+    @apply inline-block h-1.5 w-1.5 shrink-0 rounded-full;
+  }
+
+  /* Section label -- the "layer name" above each section heading. */
+  .layer-label {
+    @apply inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-accent-soft;
+  }
+
+  /* Availability banner used at the top of the home page. */
+  .availability-banner {
+    @apply inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-full border border-accent-green/35 bg-accent-green/[0.10] px-3.5 py-1.5 font-mono text-xs text-accent-green backdrop-blur;
+  }
+}
+
+@layer utilities {
+  /* Dotted "sensor grid" used behind data-flavoured panels. */
+  .dot-grid {
+    background-image: radial-gradient(var(--dot-grid-colour) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* Masks the bottom of a scrollable panel so content fades rather than cuts. */
+  .fade-bottom {
+    mask-image: linear-gradient(to bottom, black 82%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 82%, transparent 100%);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── Responsive / touch ──────────────────────────────────────────────────
+   Rules that only apply to touch (coarse-pointer) devices, so the desktop UI
+   keeps its tighter proportions while phones and tablets get tap targets that
+   meet the 44px minimum. */
+@media (pointer: coarse) {
+  /* Anything genuinely clickable gets a 44px minimum height. Plain inline text
+     links inside prose are excluded — padding them out would wreck paragraph
+     rhythm, and they are not primary controls. */
+  button,
+  [role="button"],
+  a.btn,
+  a.btn-primary,
+  a.btn-ghost,
+  input[type="submit"],
+  input[type="button"],
+  select {
+    min-height: 44px;
+  }
+
+  /* Icon-only and chip-style controls also need horizontal room. */
+  button:not(.pill):not(.tensor-chip),
+  [role="button"] {
+    min-width: 44px;
+  }
+
+  /* Touch devices have no hover, so the tilt effect only ever fires on tap and
+     leaves cards stuck at an angle. Disable the 3D transform entirely. */
+  .preserve-3d,
+  [style*="preserve-3d"] {
+    transform: none !important;
+  }
+}
+
+/* Long unbroken strings (repo URLs, package names, hashes) must never widen a
+   layout. Applied to the containers that render user- or seed-authored text. */
+.model-card,
+.metric,
+.prose-lite {
+  overflow-wrap: anywhere;
+}
+
+/* The sticky header's height, in one place, so offsets (the projects page's
+   sticky category quick-nav) stop being magic numbers.
+
+   The header renders at the same height at every breakpoint, so this needs no
+   media query. It was previously 61px/65px, neither of which matched the real
+   69px, which left the quick-nav slightly overlapping the header. If the header's
+   padding or brand block changes, re-measure and update this. */
+:root {
+  --header-height: 69px;
+}
+
+/* A standalone text link (not one sitting inside a paragraph). It looks like
+   plain text on a mouse, but gets a full-height tap target on touch, where a
+   16px-tall link is genuinely hard to hit. */
+.tap-link {
+  display: inline-flex;
+  align-items: center;
+}
+@media (pointer: coarse) {
+  .tap-link {
+    min-height: 44px;
+  }
+}
+
+/* Grid and flex items default to `min-width: auto`, which means a track can
+   never shrink below its content's intrinsic minimum. Combined with the
+   `overflow-x: hidden` on <body> that stops the page scrolling sideways, that
+   produced silently clipped text rather than a visible overflow. Defaulting
+   direct grid children to `min-width: 0` makes tracks behave as authored. */
+.grid > * {
+  min-width: 0;
+}
+
+/* The headline's gradient line. A slow, continuous sheen travels across the
+   words — enough to draw the eye on arrival without behaving like a loading
+   indicator. Each word is its own `inline-block` box, so the gradient must be
+   sized generously and shared across them to read as one sweep.
+
+   `background-position` is the only animated property; it repaints a single
+   line of text and nothing else on the page depends on it. */
+.text-neural-sheen {
+  background-image: var(--sheen);
+  background-size: 260% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: neural-sheen 9s ease-in-out infinite;
+}
+
+@keyframes neural-sheen {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Motion-sensitive visitors get the same gradient, held still. */
+@media (prefers-reduced-motion: reduce) {
+  .text-neural-sheen {
+    animation: none;
+    background-position: 25% 50%;
+  }
+}

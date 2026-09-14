@@ -538,6 +538,29 @@ Remove-Item backend\portfolio.db -Force
 - **2026-09-06**: Added `backend/scripts/check_links.py` — verifies every project link and
   exits non-zero on a broken one, so it can gate a deploy.
 
+- **2026-09-15**: Fixed the broken Vercel deployment. Diagnosis (verified against the live
+  site with a headless browser): framer-motion and hydration were fine — the failure was the
+  deploy config. The legacy `builds` + `routes` in `vercel.json` never invoked the Python
+  function (`/api/*` returned Next's 500 page, `X-Matched-Path: /500`), and the frontend was
+  built without `NEXT_PUBLIC_API_BASE_URL`, so `lib/api.ts` fell back to
+  `http://localhost:8000/api` and every DB-backed section rendered empty/zero (metrics strip,
+  projects, skills). Changes:
+  - `vercel.json` rewritten to Vercel **Services**: `frontend` service (root `frontend/`),
+    `backend` service (root `backend/`, `entrypoint: "app.main:app"`), top-level rewrites
+    `/api/(.*)` → backend, `/(.*)` → frontend. The backend service receives the original
+    path, which matches its `/api` prefix.
+  - `api/index.py` **deleted** — the legacy entry point is fully replaced by the backend
+    service; do not recreate it.
+  - `backend/requirements.txt` is now the **plain pinned list** (source of truth); the root
+    `requirements.txt` is just `-r backend/requirements.txt`. Vercel's Python builder parses
+    requirements itself and cannot follow pip includes — keep the service-root file plain.
+  - `frontend/lib/api.ts` — production fallback now derives the origin from `VERCEL_URL`
+    then `NEXT_PUBLIC_SITE_URL` instead of pointing at localhost; `fetchProjects` builds
+    URLs as strings (no `new URL()`, which rejects relative paths).
+  - `frontend/next.config.mjs` — `connect-src` also allows the `VERCEL_URL` origin so the
+    fallback scenario never has the CSP blocking the deployment's own API.
+  - README deploy section updated. **`NEXT_PUBLIC_*` vars are inlined at build time — a
+    redeploy is required after changing them.**
 - **2026-05-09**: Initial `memory.md` created.
 - **2026-05-09**: Project descriptions rewritten in plain language with structured markdown-lite
   sections; `<Description>` renderer added; detail page header gained primary `view source` +

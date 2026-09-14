@@ -1,8 +1,30 @@
 // Thin API client used by both server and client components.
 
-const FALLBACK_BASE = "http://localhost:8000/api";
+/**
+ * Base URL for the FastAPI backend.
+ *
+ * `NEXT_PUBLIC_API_BASE_URL` always wins when set. Without it:
+ * - dev keeps talking to the local uvicorn server on :8000;
+ * - a Vercel deployment falls back to its own origin — `/api/*` is routed to
+ *   the backend service by `vercel.json`, so the site keeps working instead of
+ *   silently pointing at a localhost that does not exist on the server.
+ *
+ * The value must stay absolute (`new URL()` below and server-side `fetch`
+ * both reject relative URLs), hence the explicit origin reconstruction.
+ */
+function fallbackBase(): string {
+  if (process.env.NODE_ENV !== "production") return "http://localhost:8000/api";
+  const vercelHost = process.env.VERCEL_URL?.trim();
+  if (vercelHost) return `https://${vercelHost}/api`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (siteUrl) return `${siteUrl.replace(/\/+$/, "")}/api`;
+  // Truly unknown origin: a same-origin path. Server-side fetch will not
+  // resolve it, but client-side calls still hit the right place.
+  return "/api";
+}
+
 export const API_BASE_URL: string =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || FALLBACK_BASE;
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || fallbackBase();
 
 export type Project = {
   id: number;
@@ -49,11 +71,14 @@ export async function fetchProjects(params?: {
   category?: string;
   featured?: boolean;
 }): Promise<Project[]> {
-  const url = new URL(`${API_BASE_URL}/projects`);
-  if (params?.category) url.searchParams.set("category", params.category);
+  // String building, not `new URL()`: API_BASE_URL may be a same-origin path
+  // (see fallbackBase), which the URL constructor rejects.
+  const search = new URLSearchParams();
+  if (params?.category) search.set("category", params.category);
   if (typeof params?.featured === "boolean")
-    url.searchParams.set("featured", String(params.featured));
-  return (await safeJson<Project[]>(url.toString())) ?? [];
+    search.set("featured", String(params.featured));
+  const qs = search.toString();
+  return (await safeJson<Project[]>(`${API_BASE_URL}/projects${qs ? `?${qs}` : ""}`)) ?? [];
 }
 
 export async function fetchProject(slug: string): Promise<Project | null> {

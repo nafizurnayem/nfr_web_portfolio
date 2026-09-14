@@ -179,15 +179,20 @@ Everything below fits in the free tiers.
 ### Layout
 
 ```
-vercel.json          routes /api/* to the Python function, everything else to Next.js
-api/index.py         Vercel entry point -- re-exports the FastAPI app from backend/
-requirements.txt     -r backend/requirements.txt (one list, no drift)
-frontend/            Next.js app
-backend/             FastAPI source
+vercel.json              Services config -- builds frontend/ and backend/ as one
+                         project; rewrites /api/* to the backend service, everything
+                         else to the Next.js service
+backend/requirements.txt plain pinned list -- the single source of truth (Vercel's
+                         Python builder reads the service root's file and cannot
+                         follow pip includes)
+requirements.txt         -r backend/requirements.txt (keeps root installs working)
+frontend/                Next.js app (service root)
+backend/                 FastAPI source (service root, entrypoint app.main:app)
 ```
 
-`api/index.py` puts `backend/` on `sys.path` and re-exports `app`. The
-function receives `/api/projects` and FastAPI's own `api_prefix` is `/api`, so
+Vercel detects FastAPI from `backend/app/main.py` (top-level `app`) and Next.js
+from `frontend/package.json`. The backend service receives the **original
+request path** (`/api/projects`), and FastAPI's own `api_prefix` is `/api`, so
 the paths line up — **do not strip the prefix** at either end.
 
 ### 1. Database (Neon)
@@ -219,6 +224,10 @@ NEXT_PUBLIC_API_BASE_URL=https://<your-app>.vercel.app/api
 NEXT_PUBLIC_SITE_URL=https://<your-app>.vercel.app
 ```
 
+Without `NEXT_PUBLIC_API_BASE_URL` the frontend falls back to its own origin
+(`/api/*` still routes to the backend service), so the site keeps working —
+but set it explicitly so the CSP and client-side calls are unambiguous.
+
 Generate the secret with:
 
 ```bash
@@ -229,6 +238,10 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 every cold start, and re-running `create_all` + the seed each time is pure
 latency once the database is populated. Set it to `true` for one deploy if you
 ever need the schema rebuilt.
+
+`NEXT_PUBLIC_*` variables are inlined at **build time** — after adding or
+changing one, trigger a redeploy (Deployments → Redeploy) or the running site
+keeps the previously baked value.
 
 **The app refuses to start in production** with a placeholder secret, a JWT key
 under 32 characters, an `@example.com` admin address, or a `*`/non-HTTPS CORS

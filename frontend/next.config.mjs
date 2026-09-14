@@ -15,7 +15,16 @@ function apiOrigin() {
   }
 }
 
-const connectSrc = ["'self'", apiOrigin()].filter(Boolean);
+// Mirrors the fallback in lib/api.ts: without NEXT_PUBLIC_API_BASE_URL a Vercel
+// deployment talks to its own origin, so the CSP must allow it too. VERCEL_URL
+// is only resolvable at build time on Vercel; client bundles fall back to the
+// same-origin `/api` path, which `'self'` already covers.
+function vercelOrigin() {
+  const host = process.env.VERCEL_URL?.trim();
+  return host ? `https://${host}` : "";
+}
+
+const connectSrc = ["'self'", apiOrigin(), vercelOrigin()].filter(Boolean);
 
 const scriptSrc = ["'self'", "'unsafe-inline'"];
 // Turbopack's dev runtime needs eval; production does not, so do not grant it.

@@ -1,4 +1,11 @@
 // Thin API client used by both server and client components.
+//
+// Portfolio data (projects, skills) is served from static TypeScript files so
+// the site works without the FastAPI backend.  The backend is still used for
+// the contact form and demo endpoints when it is reachable.
+
+import { STATIC_PROJECTS } from "./data/projects";
+import { STATIC_SKILLS } from "./data/skills";
 
 /**
  * Base URL for the FastAPI backend.
@@ -53,41 +60,47 @@ export type Skill = {
   sort_order: number;
 };
 
-async function safeJson<T>(input: string, init?: RequestInit): Promise<T | null> {
-  try {
-    const res = await fetch(input, {
-      ...init,
-      headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
-  }
-}
+// ---------------------------------------------------------------------------
+// Read-only data — served from static files, no backend needed
+// ---------------------------------------------------------------------------
 
 export async function fetchProjects(params?: {
   category?: string;
   featured?: boolean;
 }): Promise<Project[]> {
-  // String building, not `new URL()`: API_BASE_URL may be a same-origin path
-  // (see fallbackBase), which the URL constructor rejects.
-  const search = new URLSearchParams();
-  if (params?.category) search.set("category", params.category);
-  if (typeof params?.featured === "boolean")
-    search.set("featured", String(params.featured));
-  const qs = search.toString();
-  return (await safeJson<Project[]>(`${API_BASE_URL}/projects${qs ? `?${qs}` : ""}`)) ?? [];
+  let result = STATIC_PROJECTS.filter((p) => p.status === "published");
+  if (params?.category) {
+    result = result.filter((p) => p.category === params.category);
+  }
+  if (typeof params?.featured === "boolean") {
+    result = result.filter((p) => p.featured === params.featured);
+  }
+  // Match backend ordering: featured first, then newest first
+  result.sort((a, b) => {
+    if (a.featured !== b.featured) return a.featured ? -1 : 1;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+  return result;
 }
 
 export async function fetchProject(slug: string): Promise<Project | null> {
-  return safeJson<Project>(`${API_BASE_URL}/projects/${encodeURIComponent(slug)}`);
+  return (
+    STATIC_PROJECTS.find(
+      (p) => p.slug === slug && p.status === "published"
+    ) ?? null
+  );
 }
 
 export async function fetchSkills(): Promise<Skill[]> {
-  return (await safeJson<Skill[]>(`${API_BASE_URL}/skills`)) ?? [];
+  return [...STATIC_SKILLS].sort((a, b) => {
+    if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+    return a.name.localeCompare(b.name);
+  });
 }
+
+// ---------------------------------------------------------------------------
+// Write endpoints — still hit the backend (graceful fallback if unreachable)
+// ---------------------------------------------------------------------------
 
 export type ContactPayload = {
   name: string;
@@ -114,8 +127,23 @@ export async function submitContact(
       };
     }
     return { ok: true };
-  } catch (e) {
-    return { ok: false, error: "Network error. Please try again." };
+  } catch {
+    // Backend unreachable — fall back to mailto
+    const subject = encodeURIComponent(payload.subject);
+    const body = encodeURIComponent(
+      `Name: ${payload.name}\nEmail: ${payload.email}\n\n${payload.message}`
+    );
+    if (typeof window !== "undefined") {
+      window.open(
+        `mailto:nfrnayem123@gmail.com?subject=${subject}&body=${body}`,
+        "_blank"
+      );
+    }
+    return {
+      ok: false,
+      error:
+        "The contact server is offline. Your email client has been opened as a fallback.",
+    };
   }
 }
 
@@ -146,7 +174,7 @@ export async function submitPlantDiseaseDemo(
     }
     const data = (await res.json()) as DemoPrediction;
     return { ok: true, data };
-  } catch (e) {
+  } catch {
     return { ok: false, error: "Network error while contacting the demo API." };
   }
 }

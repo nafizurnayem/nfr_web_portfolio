@@ -228,7 +228,7 @@ export default async function ResumePage() {
               <span className="text-accent">::</span> skills
             </p>
             {Object.keys(grouped).length === 0 ? (
-              <p className="mt-3 text-sm text-ink-300">Backend offline.</p>
+              <p className="mt-3 text-sm text-ink-300">No skills found.</p>
             ) : (
               <ul className="mt-4 space-y-4">
                 {Object.entries(grouped).map(([category, names]) => (

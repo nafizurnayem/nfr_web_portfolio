@@ -209,15 +209,11 @@ export default async function HomePage() {
         title="Things I have actually built"
         description="Every project links to real source on GitHub. Nothing here is a mockup."
       >
-        {featured.length === 0 ? (
-          <BackendOffline />
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {featured.map((project, i) => (
-              <ProjectCard project={project} key={project.id} index={i} />
-            ))}
-          </div>
-        )}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {featured.map((project, i) => (
+            <ProjectCard project={project} key={project.id} index={i} />
+          ))}
+        </div>
         <div className="mt-6">
           <Link
             href="/projects"
@@ -235,14 +231,10 @@ export default async function HomePage() {
         title="Tools I reach for"
         description="Grouped by where they sit in the pipeline, strongest first. Highlighted names are the ones I reach for daily."
       >
-        {skills.length === 0 ? (
-          <BackendOffline />
-        ) : (
-          <SkillMatrix
-            skillsByCategory={skillsByCategory}
-            orderedCategories={orderedCategories}
-          />
-        )}
+        <SkillMatrix
+          skillsByCategory={skillsByCategory}
+          orderedCategories={orderedCategories}
+        />
       </Section>
 
       {/* ── Contact CTA ────────────────────────────────────────────────── */}
@@ -330,22 +322,5 @@ function DownloadIcon() {
       <path d="M7 10l5 5 5-5" />
       <path d="M12 15V3" />
     </svg>
-  );
-}
-
-function BackendOffline() {
-  return (
-    <div className="model-card p-5">
-      <p className="layer-label text-accent-amber">
-        <span aria-hidden>!</span> backend offline
-      </p>
-      <p className="mt-2 text-sm text-ink-200">
-        The FastAPI backend is not reachable. Start it with{" "}
-        <code className="rounded bg-surface/[0.10] px-1.5 py-0.5 font-mono text-xs text-accent-soft">
-          uvicorn app.main:app
-        </code>{" "}
-        and reload this page.
-      </p>
-    </div>
   );
 }
